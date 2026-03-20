@@ -90,7 +90,7 @@ int main(){
         pop **m = iniciaMatriz(&n, &r);
         soma(r,m, &n);
         result final = verificaResultado(r,m,&n);
-        printf("resultado: valor -> %lf; pais: %lf, %lf; index: %d \n", final.valor, final.pais[0], final.pais[1], final.index);
+        printf("resultado: valor -> %lf; pais: %lf, %lf; index: %d \n", final.valor, final.pais[0].valor, final.pais[1].valor, final.index);
         liberaMemoria(m, r, &n);
     }
     
