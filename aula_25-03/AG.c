@@ -169,7 +169,7 @@ void mutacao(int ***mb, int n, int tamTotal, float taxaMutacao) {
 }
 int main(){
    srand(time(NULL));
-   int n = 100, tint = 8, tfra = 16, nG = 100;
+   int n = 100, tint = 8, tfra = 16, nG = 30;
    int*** mb = alocaMatrizBinaria(n, tint + tfra);
    float** mf = alocaMatrizFloat(n);
    iniciaMatrizes(mf, mb, n, tint, tfra);
@@ -177,15 +177,15 @@ int main(){
    for (int g = 0; g < nG; g++){
         float *fit = calculaFit(mf, n);
         MelhorIndividuo rg = obterMelhor(mf, fit, n);
-        printf("geracao %d | Melhor X: %.6f | Melhor Y: %.6f Fitness: %.6f\n", g, rg.x, rg.y, rg.fitness);
+        printf("geracao %d | Melhor X: %.6f | Melhor Y: %.6f Fitness: %.6f\n", g + 1, rg.x, rg.y, rg.fitness);
         
         int *vp = selecao(n, fit);
         int ***nmb = novaPop(mb, vp, n, 24);
         
-        mutacao(nmb, n, tint + tfra, 0.10);
+        mutacao(nmb, n, tint + tfra, 0.01);
 
         liberarMatrizBinaria(mb, n);
-        mb = nmb;
+        mb = nmb;   
         for (size_t i = 0; i < n; i++){
             mf[i][0] = binarioDecimal(mb[i][0], tint, tfra);
             mf[i][1] = binarioDecimal(mb[i][1], tint, tfra);
