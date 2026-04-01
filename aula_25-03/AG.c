@@ -1,7 +1,12 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
-
+#include<time.h>
+typedef struct {
+    float x;
+    float y;
+    float fitness;
+} MelhorIndividuo;
 void decimalBinario(float num, int bits[], int tamInt, int tamFrac){
     int inteiro = (int)num;
     float frac = num - inteiro;
@@ -86,7 +91,7 @@ float* calculaFit(float **mf, int n){
         float x = mf[i][0];
         float y = mf[i][1];
 
-        fit[i] = fabsf(x + y);
+        fit[i] = (x * x) + (y * y);
     }
     return fit;
 }
@@ -113,6 +118,84 @@ int* selecao(int npop, float* fit){
     }
     return vpais;
 }
+int*** novaPop(int ***mb, int *vp, int n, int tamtotal){
+    int ***npop = alocaMatrizBinaria(n, tamtotal);
+    for (size_t i = 0; i < n; i+=2){
+        int idxPai1 = vp[i];
+        int idxPai2 = vp[i+1];
+
+        int pCorte = (rand() % (tamtotal - 1)) + 1;
+
+        for (int var = 0; var < 2; var++){
+            for (int b = 0; b < tamtotal; b++){
+                if (b < pCorte){
+                    npop[i][var][b] = mb[idxPai1][var][b];
+                    npop[i+1][var][b] = mb[idxPai2][var][b];
+                }else{
+                    npop[i][var][b] = mb[idxPai2][var][b];
+                    npop[i+1][var][b] = mb[idxPai1][var][b];
+                }
+            }   
+        }
+    }
+    return npop;
+}
+MelhorIndividuo obterMelhor(float **mf, float *fit, int n) {
+    MelhorIndividuo campeao;
+    int melhorIdx = 0;
+
+    for (int i = 1; i < n; i++) {
+        if (fit[i] < fit[melhorIdx]) {
+            melhorIdx = i;
+        }
+    }
+    campeao.x = mf[melhorIdx][0];
+    campeao.y = mf[melhorIdx][1];
+    campeao.fitness = fit[melhorIdx];
+
+    return campeao;
+}
+void mutacao(int ***mb, int n, int tamTotal, float taxaMutacao) {
+    for (int i = 0; i < n; i++) {
+        for (int var = 0; var < 2; var++) {
+            for (int b = 0; b < tamTotal; b++) {
+                float r = (float)rand() / (float)RAND_MAX;
+                if (r < taxaMutacao) {
+                    mb[i][var][b] = !mb[i][var][b]; 
+                }
+            }
+        }
+    }
+}
 int main(){
-   
+   srand(time(NULL));
+   int n = 100, tint = 8, tfra = 16, nG = 100;
+   int*** mb = alocaMatrizBinaria(n, tint + tfra);
+   float** mf = alocaMatrizFloat(n);
+   iniciaMatrizes(mf, mb, n, tint, tfra);
+
+   for (int g = 0; g < nG; g++){
+        float *fit = calculaFit(mf, n);
+        MelhorIndividuo rg = obterMelhor(mf, fit, n);
+        printf("geracao %d | Melhor X: %.6f | Melhor Y: %.6f Fitness: %.6f\n", g, rg.x, rg.y, rg.fitness);
+        
+        int *vp = selecao(n, fit);
+        int ***nmb = novaPop(mb, vp, n, 24);
+        
+        mutacao(nmb, n, tint + tfra, 0.01);
+        
+        liberarMatrizBinaria(mb, n);
+        mb = nmb;
+        for (size_t i = 0; i < n; i++){
+            mf[i][0] = binarioDecimal(mb[i][0], tint, tfra);
+            mf[i][1] = binarioDecimal(mb[i][1], tint, tfra);
+        }
+        free(vp);
+        free(fit);
+   }
+   float* fit = calculaFit(mf, n);
+   MelhorIndividuo r = obterMelhor(mf, fit, n);
+   printf("Melhor X final: %.6f\n", r.x);
+   printf("Melhor Y final: %.6f\n", r.y);
+   printf("Fitness final: %.6f (Objetivo: 0.0000)\n", r.fitness);
 }
