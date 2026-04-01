@@ -174,7 +174,7 @@ int main(){
    float** mf = alocaMatrizFloat(n);
    iniciaMatrizes(mf, mb, n, tint, tfra);
 
-   for (int g = 0; g < nG; g++){
+   for (int g = 0; g < nG; g++){//geracoes
         float *fit = calculaFit(mf, n);
         MelhorIndividuo rg = obterMelhor(mf, fit, n);
         printf("geracao %d | Melhor X: %.6f | Melhor Y: %.6f Fitness: %.6f\n", g + 1, rg.x, rg.y, rg.fitness);
@@ -193,6 +193,7 @@ int main(){
         free(vp);
         free(fit);
    }
+   
    float* fit = calculaFit(mf, n);
    MelhorIndividuo r = obterMelhor(mf, fit, n);
    printf("Melhor X final: %.6f\n", r.x);
