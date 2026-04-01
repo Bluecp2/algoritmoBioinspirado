@@ -83,30 +83,52 @@ float geraFloat8_16(){
 unsigned int r24 = ((rand() << 12) ^ rand()) & 0xFFFFFF;
 return (float)r24 / 65536.0f;
 }
+float f_objetivo(float x1, float x2) {
+    return pow(x1 - 10, 3) + pow(x2 - 20, 3);
+}
 
+float g1(float x1, float x2) {
+    return -pow(x1 - 5, 2) - pow(x2 - 5, 2) + 100;
+}
+
+float g2(float x1, float x2) {
+    return pow(x1 - 6, 2) + pow(x2 - 5, 2) - 82.81;
+}
+float geraFloatRange(float min, float max) {
+    float r = (float)rand() / (float)RAND_MAX;
+    return min + r * (max - min);
+}
+float calcular_fitness_total(float x1, float x2) {
+    float obj = f_objetivo(x1, x2);
+    float pen = 0;
+    
+    float v1 = g1(x1, x2);
+    float v2 = g2(x1, x2);
+    
+    if (v1 > 0) pen += 1000000 + (v1 * 1000); 
+    if (v2 > 0) pen += 1000000 + (v2 * 1000);
+    
+    return obj + pen;
+}
 void iniciaMatrizes(float **mfloat, int***mBin, int n, int tInt,int tFrac){
     for (size_t i = 0; i < n; i++){
-        float x = geraFloat8_16();
+        float x = geraFloatRange(13.0, 100.0);
         mfloat[i][0] = x;
         decimalBinario(x, mBin[i][0], tInt,tFrac);
 
-        float y = geraFloat8_16();
+        float y = geraFloatRange(0.0, 100.0);
         mfloat[i][1] = y;
         decimalBinario(y, mBin[i][1], tInt,tFrac);
     }
 }
 
 float* calculaFit(float **mf, int n){
-    float *fit = alocaVetorFit(n);
-    for (size_t i = 0; i < n; i++){
-        float x = mf[i][0];
-        float y = mf[i][1];
-
-        fit[i] = (x * x) + (y * y);
+    float *fit = (float*)malloc(n * sizeof(float));
+    for (size_t i = 0; i < n; i++) {
+        fit[i] = calcular_fitness_total(mf[i][0], mf[i][1]);
     }
     return fit;
 }
-
 int* selecao(int npop, float* fit){
     int* vpais = (int*)malloc(npop * sizeof(int));
     float pv = 0.9f;
@@ -171,7 +193,7 @@ MelhorIndividuo obterMelhor(float **mf, float *fit, int n) {
 }
 
 void mutacao(int ***mb, int n, int tamTotal, float taxaMutacao) {
-    for (int i = 0; i < n; i++) {
+    for (int i = 1; i < n; i++) {
         for (int var = 0; var < 2; var++) {
             for (int b = 0; b < tamTotal; b++) {
                 float r = (float)rand() / (float)RAND_MAX;
@@ -182,10 +204,23 @@ void mutacao(int ***mb, int n, int tamTotal, float taxaMutacao) {
         }
     }
 }
+void aplicarElitismo(int ***popAntiga, float *fitAntigo, int ***popNova, int n, int tamTotal) {
+    int melhorIdx = 0;
+    for (int i = 1; i < n; i++) {
+        if (fitAntigo[i] < fitAntigo[melhorIdx]) {
+            melhorIdx = i;
+        }
+    }
 
+    for (int var = 0; var < 2; var++) {
+        for (int b = 0; b < tamTotal; b++) {
+            popNova[0][var][b] = popAntiga[melhorIdx][var][b];
+        }
+    }
+}
 int main(){
    srand(time(NULL));
-   int n = 100, tint = 8, tfra = 16, nG = 30;
+   int n = 1000, tint = 8, tfra = 16, nG = 1000;
    int*** mb = alocaMatrizBinaria(n, tint + tfra);
    float** mf = alocaMatrizFloat(n);
    iniciaMatrizes(mf, mb, n, tint, tfra);
@@ -199,6 +234,8 @@ int main(){
     }
 
     fprintf(ptr,"Geracao,Melhor_X,Melhor_Y,Fitness\n");
+    
+
    for (int g = 0; g < nG; g++){//geracoes
         float *fit = calculaFit(mf, n);
         MelhorIndividuo rg = obterMelhor(mf, fit, n);
@@ -208,14 +245,20 @@ int main(){
 
         int *vp = selecao(n, fit);
         int ***nmb = novaPop(mb, vp, n, 24);
-        
-        mutacao(nmb, n, tint + tfra, 0.01);
+
+        aplicarElitismo(mb, fit, nmb, n, tint + tfra);
+        mutacao(nmb, n, tint + tfra, 0.02);
 
         liberarMatrizBinaria(mb, n);
         mb = nmb;   
         for (size_t i = 0; i < n; i++){
             mf[i][0] = binarioDecimal(mb[i][0], tint, tfra);
+            if(mf[i][0] < 13.0) mf[i][0] = 13.0;
+            if(mf[i][0] > 100.0) mf[i][0] = 100.0;
+
             mf[i][1] = binarioDecimal(mb[i][1], tint, tfra);
+            if(mf[i][1] < 0.0) mf[i][1] = 0.0;
+            if(mf[i][1] > 100.0) mf[i][1] = 100.0;
         }
         free(vp);
         free(fit);
@@ -227,7 +270,7 @@ int main(){
    MelhorIndividuo r = obterMelhor(mf, fit, n);
    printf("Melhor X final: %.6f\n", r.x);
    printf("Melhor Y final: %.6f\n", r.y);
-   printf("Fitness final: %.6f (Objetivo: 0.0000)\n", r.fitness);
+   printf("Fitness final: %.6f\n", r.fitness);
    liberarMatrizBinaria(mb, n);
    liberarMatrizFloat(mf, n);
    return 0;
