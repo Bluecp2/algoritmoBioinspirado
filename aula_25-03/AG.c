@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<math.h>
 
 void decimalBinario(float num, int bits[], int tamInt, int tamFrac){
     int inteiro = (int)num;
@@ -48,7 +49,7 @@ int*** alocaMatrizBinaria(int n, int tamTotal){
     }
     return m;
 }
-float* alocaVetorResultado(int n){
+float* alocaVetorFit(int n){
     float *r = (float*)malloc(n * sizeof(float));
     return r;
 }
@@ -79,7 +80,39 @@ void iniciaMatrizes(float **mfloat, int***mBin, int n, int tInt,int tFrac){
         decimalBinario(y, mBin[i][1], tInt,tFrac);
     }
 }
+float* calculaFit(float **mf, int n){
+    float *fit = alocaVetorFit(n);
+    for (size_t i = 0; i < n; i++){
+        float x = mf[i][0];
+        float y = mf[i][1];
 
+        fit[i] = fabsf(x + y);
+    }
+    return fit;
+}
+int* selecao(int npop, float* fit){
+    int* vpais = (int*)malloc(npop * sizeof(int));
+    float pv = 0.9f;
+
+    for (size_t i = 0; i < npop; i++){
+        int p1 = rand() % npop;
+        int p2 = rand() % npop;
+
+        while(p1 == p2)
+            p2 = rand() % npop;
+        
+        float r = (float)rand() / (float)RAND_MAX;
+        int vencedor;
+
+        if(fit[p1] < fit[p2])
+            vencedor = (r < pv) ? p1 : p2;
+        else
+            vencedor = (r < pv) ? p2 : p1;
+        
+        vpais[i] = vencedor;
+    }
+    return vpais;
+}
 int main(){
    
 }
