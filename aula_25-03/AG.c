@@ -182,8 +182,8 @@ int main(){
         int *vp = selecao(n, fit);
         int ***nmb = novaPop(mb, vp, n, 24);
         
-        mutacao(nmb, n, tint + tfra, 0.01);
-        
+        mutacao(nmb, n, tint + tfra, 0.10);
+
         liberarMatrizBinaria(mb, n);
         mb = nmb;
         for (size_t i = 0; i < n; i++){
